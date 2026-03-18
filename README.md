@@ -13,7 +13,7 @@ Requirements: Node.js & npm — [install with nvm](https://github.com/nvm-sh/nvm
 ```sh
 # Clone the repository
 git clone <YOUR_GIT_URL>
-cd QHacks_Meter
+cd KPark
 
 # Install dependencies
 npm i

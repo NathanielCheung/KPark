@@ -84,7 +84,7 @@ void sendToWebsite(const char* lotId, int availableSpots) {
 // ----------------------------
 void setup() {
   Serial.begin(9600);
-  BTSerial.begin("QHacks_Meter");  // Bluetooth name shown when pairing
+  BTSerial.begin("KPark");  // Bluetooth name shown when pairing
 
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
