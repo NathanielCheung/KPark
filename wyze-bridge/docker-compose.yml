@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  wyze-bridge:
+    image: mrlt8/wyze-bridge:latest
+    container_name: wyze-bridge
+    restart: unless-stopped
+    ports:
+      - "5000:5000"   # Web UI
+      - "8554:8554"   # RTSP
+      - "8888:8888"   # HLS
+    environment:
+      # IMPORTANT:
+      # - Do NOT commit your real values to GitHub.
+      # - Edit these locally with your actual credentials and API keys.
+      - WYZE_onepumpbald@gmail.com
+      - WYZE_PASSWORD=Wyze4Life!
+      - API_ID=06479530-5450-4275-a215-94330eb0a218
+      - API_KEY=rCpTgjXg7iNw5nTUMgfR2BlVIKfsbmCGlXpXPimvZIjpUumdYJbUf5kzSUoc
+      - WB_AUTH=false
+

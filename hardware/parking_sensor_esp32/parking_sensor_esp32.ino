@@ -1,9 +1,12 @@
 /*
- * Parking Lot + Street Sensor (Arduino Uno WiFi Rev2 or compatible)
+ * Parking Lot + Street Sensor (ESP32 or compatible)
  * - Beamish Munro Hall: FSR entry/exit, LED1-3 = occupancy (0-3), send available spots to site
  * - Clergy St W: ultrasonic, LED4 = occupied/vacant, send 0 or 1 available to site
- * Serial output: PARK,lotId,availableSpots so serial bridge can forward to website.
+ * Serial/Bluetooth output: PARK,lotId,availableSpots so a bridge app can forward to website.
  */
+
+#include "BluetoothSerial.h"
+BluetoothSerial BTSerial;
 // ----------------------------
 // Pin definitions
 // ----------------------------
@@ -59,12 +62,21 @@ void updateParkingLEDs() {
   digitalWrite(LED3_PIN, currentOccupancy >= 3 ? HIGH : LOW);
 }
 
-// Print PARK line so serial bridge can POST to website
+// Print PARK line so serial/BT bridge can POST to website
 void sendToWebsite(const char* lotId, int availableSpots) {
+  // USB serial (for debugging or a wired bridge)
   Serial.print("PARK,");
   Serial.print(lotId);
   Serial.print(",");
   Serial.println(availableSpots);
+
+  // Bluetooth Serial (for wireless bridge)
+  if (BTSerial.hasClient()) {
+    BTSerial.print("PARK,");
+    BTSerial.print(lotId);
+    BTSerial.print(",");
+    BTSerial.println(availableSpots);
+  }
 }
 
 // ----------------------------
@@ -72,6 +84,7 @@ void sendToWebsite(const char* lotId, int availableSpots) {
 // ----------------------------
 void setup() {
   Serial.begin(9600);
+  BTSerial.begin("QHacks_Meter");  // Bluetooth name shown when pairing
 
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);
