@@ -210,8 +210,8 @@ function dist(
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) ** 2;
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) ** 2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
@@ -290,6 +290,89 @@ export const initialParkingData: ParkingLocation[] = [
       [44.23540062963406, -76.49780603151758],
     ],
   },
+
+  {
+    id: 'queen-st',
+    name: 'Queen Street',
+    type: 'street',
+    totalSpots: 13,
+    availableSpots: 5,
+    lat: 44.233109940874726,
+    lng: -76.48638773476445,
+    address: 'Queen St, Downtown Kingston',
+    operatingHours: [{ days: MON_SAT, start: '09:30', end: '17:30' }],
+    pricing: {
+      tiers: [
+        { days: MON_SAT, startTime: '09:30', endTime: '17:30', rate: 2, unit: 'hour' },
+        { days: [0], startTime: '00:00', endTime: '24:00', rate: 0, unit: 'hour' },
+      ],
+    },
+    maxStayHours: 3,
+    path: [
+      [44.23200561051448, -76.47928777867283],
+      [44.23406269317056, -76.49271445067188],
+    ],
+  },
+
+  {
+    id: 'johnson-st',
+    name: 'Johnson Street',
+    type: 'street',
+    totalSpots: 20,
+    availableSpots: 13,
+    lat: 44.231166546574,
+    lng: -76.49224382187798,
+    address: 'Johnson St, Downtown Kingston',
+    operatingHours: [{ days: MON_SAT, start: '09:30', end: '17:30' }],
+    pricing: {
+      tiers: [
+        { days: MON_SAT, startTime: '09:30', endTime: '17:30', rate: 2, unit: 'hour' },
+        { days: [0], startTime: '00:00', endTime: '24:00', rate: 0, unit: 'hour' },
+      ],
+    },
+    maxStayHours: 3,
+    path: [
+      [44.22837914671274, -76.48149722234045],
+      [44.23010096757585, -76.4852028181767],
+      [44.23022079579275, -76.4857014125111],
+      [44.231002850045655, -76.49107936751325],
+      [44.23168362714523, -76.49554103259378],
+      [44.231700688976105, -76.4959536829794],
+      [44.23153671266368, -76.50082112834113],
+      [44.23127309275924, -76.5089363070011],
+      [44.23110280841988, -76.51193775160975],
+      [44.23099724974182, -76.51355684822191],
+    ],
+  },
+
+  {
+    id: 'barrie-st',
+    name: 'Barrie Street',
+    type: 'street',
+    totalSpots: 15,
+    availableSpots: 2,
+    lat: 44.22838242106414,
+    lng: -76.49091737215626,
+    address: 'Barrie Street, Downtown Kingston',
+    operatingHours: [{ days: MON_SAT, start: '09:30', end: '17:30' }],
+    pricing: {
+      tiers: [
+        { days: MON_SAT, startTime: '09:30', endTime: '17:30', rate: 2.5, unit: 'hour' },
+        { days: [0], startTime: '00:00', endTime: '24:00', rate: 0, unit: 'hour' },
+      ],
+    },
+    maxStayHours: 2,
+    path: [
+      [44.22293932202447, -76.49033776879267],
+      [44.22884877506044, -76.49092826377043],
+      [44.2312475346331, -76.49119296426993],
+      [44.235084557197695, -76.49019523137619],
+      [44.236719132837095, -76.48982812224571],
+      [44.23692337230281, -76.48980776035025],
+      [44.239782650382494, -76.49072404566057]
+    ],
+  },
+
   {
     id: 'king-st-e',
     name: 'King Street East',
@@ -309,7 +392,7 @@ export const initialParkingData: ParkingLocation[] = [
     maxStayHours: 2,
     path: [
       [44.23319370452168, -76.48040516118641],
-      [44.23044356550673,-76.4812464041255],
+      [44.23044356550673, -76.4812464041255],
       [44.224829869221935, -76.48624128407852],
       [44.22275756416579, -76.4902897657242]
     ],
@@ -388,11 +471,11 @@ export const initialParkingData: ParkingLocation[] = [
     },
     maxStayHours: 2,
     path: [
-        [44.22420282531405, -76.48533125749618],
-        [44.22843895311297, -76.48141836322341],
-        [44.23023967517676, -76.4797655045475],
-        [44.23037261147047, -76.47969804111425],
-        [44.23319442044337, -76.47882101308795],
+      [44.22420282531405, -76.48533125749618],
+      [44.22843895311297, -76.48141836322341],
+      [44.23023967517676, -76.4797655045475],
+      [44.23037261147047, -76.47969804111425],
+      [44.23319442044337, -76.47882101308795],
     ],
   },
   {
