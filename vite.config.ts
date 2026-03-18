@@ -4,7 +4,8 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: "/QHacks_Meter/",
+  // GitHub Pages base path for the KPark repo
+  base: "/KPark/",
   server: {
     host: "::",
     port: 8080,
