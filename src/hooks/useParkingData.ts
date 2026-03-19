@@ -5,13 +5,14 @@ export function useParkingData(updateInterval: number = 10000) {
   const [parkingData, setParkingData] = useState<ParkingLocation[]>(initialParkingData);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  const ARDUINO_IDS = ['clergy-st-w', 'beamish-munro-hall'];
+  // Locations whose availability is driven by external sensors/cameras (not random demo simulation).
+  const SENSOR_UPDATED_IDS = ['clergy-st-w', 'beamish-munro-hall', 'ontario-brock-lot'];
 
   const simulateUpdate = useCallback(() => {
     setParkingData(currentData =>
       currentData.map(location => {
         // Skip random simulation for Arduino-powered locations
-        if (ARDUINO_IDS.includes(location.id)) return location;
+        if (SENSOR_UPDATED_IDS.includes(location.id)) return location;
 
         // Random chance to change availability (30% chance)
         if (Math.random() > 0.3) return location;
@@ -51,7 +52,7 @@ export function useParkingData(updateInterval: number = 10000) {
         if (!res.ok) return;
         const data = (await res.json()) as Record<string, number>;
         for (const [lotId, availableSpots] of Object.entries(data)) {
-          if (ARDUINO_IDS.includes(lotId) && typeof availableSpots === 'number') {
+          if (SENSOR_UPDATED_IDS.includes(lotId) && typeof availableSpots === 'number') {
             applySensorUpdate(lotId, availableSpots);
           }
         }

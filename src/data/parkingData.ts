@@ -58,6 +58,12 @@ function parseTime(t: string): number {
   return (h ?? 0) * 60 + (m ?? 0);
 }
 
+const FREE_AFTER_MINUTES = 17 * 60 + 30; // 5:30pm
+const FREE_RATE_ONLY_FOR_IDS = new Set<string>([
+  // Ontario & Brock Lot (Wyze camera controlled)
+  'ontario-brock-lot',
+]);
+
 // Check if location is currently open (within operating hours)
 export function isLocationOpen(location: ParkingLocation, date: Date = new Date()): boolean {
   if (location.type === 'street') return true; // Street parking always available (paid or free)
@@ -118,6 +124,15 @@ export function getCurrentPrice(location: ParkingLocation, date: Date = new Date
   const day = date.getDay();
   const mins = date.getHours() * 60 + date.getMinutes();
 
+  // After 5:30pm, some locations become free (rate = 0).
+  if (mins >= FREE_AFTER_MINUTES && FREE_RATE_ONLY_FOR_IDS.has(location.id)) {
+    return {
+      rate: 0,
+      unit: 'hour',
+      label: 'Free',
+    };
+  }
+
   for (const tier of location.pricing.tiers) {
     const days = tier.days ?? [0, 1, 2, 3, 4, 5, 6];
     if (!days.includes(day)) continue;
@@ -166,6 +181,10 @@ export type AccessibilityFilterState = {
 /** True if location is free: no pricing, or at least one tier has rate 0 (e.g. free on Sundays). */
 export function isFreeParking(loc: ParkingLocation): boolean {
   if (!loc.pricing?.tiers?.length) return true;
+  if (loc.pricing.permitOnly) return false;
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  if (mins >= FREE_AFTER_MINUTES && FREE_RATE_ONLY_FOR_IDS.has(loc.id)) return true;
   return loc.pricing.tiers.some(t => t.rate === 0);
 }
 
