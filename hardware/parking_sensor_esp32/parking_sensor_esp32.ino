@@ -1,22 +1,19 @@
 /*
- * Parking Lot + Street Sensor (ESP32 or compatible)
+ * Parking Lot + Street Sensor (Arduino Uno WiFi Rev2 or compatible)
  * - Beamish Munro Hall: FSR entry/exit, LED1-3 = occupancy (0-3), send available spots to site
  * - Clergy St W: ultrasonic, LED4 = occupied/vacant, send 0 or 1 available to site
- * Serial/Bluetooth output: PARK,lotId,availableSpots so a bridge app can forward to website.
+ * Serial output: PARK,lotId,availableSpots so serial bridge can forward to website.
  */
-
-#include "BluetoothSerial.h"
-BluetoothSerial BTSerial;
 // ----------------------------
 // Pin definitions
 // ----------------------------
 const int FSR1_PIN = A0;   // Entry sensor
 const int FSR2_PIN = A1;   // Exit sensor
 
-const int LED1_PIN = 2;    // Parking occupancy LED 1
-const int LED2_PIN = 3;    // Parking occupancy LED 2
-const int LED3_PIN = 4;    // Parking occupancy LED 3
-const int LED4_PIN = 5;    // Ultrasonic vacancy LED
+const int LED1_PIN = 11;    // Parking occupancy LED 1
+const int LED2_PIN = 12;    // Parking occupancy LED 2
+const int LED3_PIN = 13;    // Parking occupancy LED 3
+const int LED4_PIN = 6;    // Ultrasonic vacancy LED
 
 const int ULTRASONIC_TRIG_PIN = 9;
 const int ULTRASONIC_ECHO_PIN = 10;
@@ -62,21 +59,12 @@ void updateParkingLEDs() {
   digitalWrite(LED3_PIN, currentOccupancy >= 3 ? HIGH : LOW);
 }
 
-// Print PARK line so serial/BT bridge can POST to website
+// Print PARK line so serial bridge can POST to website
 void sendToWebsite(const char* lotId, int availableSpots) {
-  // USB serial (for debugging or a wired bridge)
   Serial.print("PARK,");
   Serial.print(lotId);
   Serial.print(",");
   Serial.println(availableSpots);
-
-  // Bluetooth Serial (for wireless bridge)
-  if (BTSerial.hasClient()) {
-    BTSerial.print("PARK,");
-    BTSerial.print(lotId);
-    BTSerial.print(",");
-    BTSerial.println(availableSpots);
-  }
 }
 
 // ----------------------------
@@ -84,7 +72,6 @@ void sendToWebsite(const char* lotId, int availableSpots) {
 // ----------------------------
 void setup() {
   Serial.begin(9600);
-  BTSerial.begin("KPark");  // Bluetooth name shown when pairing
 
   pinMode(LED1_PIN, OUTPUT);
   pinMode(LED2_PIN, OUTPUT);

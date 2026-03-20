@@ -81,7 +81,7 @@ The website will poll the backend every few seconds for parking data.
 This script:
 
 - reads RTSP from Wyze Bridge,
-- runs YOLO to detect `car`, `truck`, `bus`, and `motorcycle`,
+- runs YOLO and counts/draws only `car`, `truck`, and `motorcycle` (no bus/plane/person/etc. boxes),
 - computes `availableSpots`,
 - POSTs to the backend at `/api/parking`.
 
@@ -100,33 +100,50 @@ pip install ultralytics opencv-python requests
 Replace the RTSP URL below with the exact one from Wyze Bridge if different:
 
 ```powershell
-$env:WYZE_RTSP_URL="rtsp://localhost:8554/hottpotty"
+# From your QHacks_Meter project root (folder that contains wyze_beamish_detector.py)
 
-# Detection tuning (can be adjusted):
-$env:YOLO_CONF="0.1"        # lower => more sensitive, more false positives
-$env:YOLO_IMGSZ="1280"      # 640 or 1280 are good starting points
-$env:DETECTION_DEBUG="1"    # print each detection label + confidence
-$env:SHOW_PREVIEW="1"       # show window with bounding boxes
+$env:WYZE_RTSP_URL="rtsp://localhost:8554/hottpotty"   # match Wyze Bridge → RTSP
+
+$env:WYZE_TOTAL_SPOTS="10"
+# $env:WYZE_LOT_ID="ontario-brock-lot"   # optional; default is this
+
+$env:FRAME_INTERVAL_SECONDS="2"
+
+$env:YOLO_CONF="0.2"                    # lower (e.g. 0.15) if cars are missed
+$env:YOLO_VEHICLE_ONLY="1"                # only ask model for car / motorcycle / truck
+$env:YOLO_IMGSZ="1280"
+$env:DETECTION_DEBUG="1"
+$env:SHOW_PREVIEW="1"
+
+$env:PREVIEW_LIVE="1"                     # live feed
+$env:PREVIEW_BOX_OVERLAY_LIVE="1"        # car/truck/motorcycle boxes on live feed (default on)
+$env:PREVIEW_MAX_FPS="20"
+
+# Optional: turn off extra debug probe prints
+# $env:WYZE_PROBE_WHEN_EMPTY="0"
 
 python wyze_beamish_detector.py
 ```
 
+**How availability works:** on each **scan** (every `FRAME_INTERVAL_SECONDS`), YOLO counts only **`car`, `truck`, and `motorcycle`**. The preview draws boxes for those classes only (not people, boats, clocks, etc.). With **`PREVIEW_LIVE=1`**, **`PREVIEW_BOX_OVERLAY_LIVE=1`** (default) redraws those outlines on the live feed using the last scan.  
+`availableSpots = WYZE_TOTAL_SPOTS − that count` (never below 0). So **each extra vehicle in view reduces available spots by 1** until you hit zero.
+
 You should see output like:
 
 ```text
-=== Wyze -> Beamish Munro Hall parking bridge ===
+=== Wyze -> Ontario & Brock Lot parking bridge ===
 RTSP_URL          = rtsp://localhost:8554/hottpotty
 PARKING_API_URL   = http://localhost:3001/api/parking
 LOT_ID            = ontario-brock-lot
-TOTAL_SPOTS       = 3
-FRAME_INTERVAL_S  = 1.0
-YOLO_CONF         = 0.1
+TOTAL_SPOTS       = 10
+FRAME_INTERVAL_S  = 2.0
+YOLO_CONF         = 0.4
 YOLO_IMGSZ        = 1280
 DETECTION_DEBUG   = True
 SHOW_PREVIEW      = True
 [INFO] Video stream opened. Press Ctrl+C to stop.
-[INFO] Detected cars: 2, computed availableSpots: 1
-[OK] Posted update to backend: {'lotId': 'ontario-brock-lot', 'availableSpots': 1} (status 200)
+[INFO] Detected vehicles: 2, computed availableSpots: 8
+[OK] Posted update to backend: {'lotId': 'ontario-brock-lot', 'availableSpots': 8} (status 200)
 ```
 
 This means:
@@ -143,26 +160,30 @@ This means:
   In `wyze_beamish_detector.py`:
 
   ```python
-  TOTAL_SPOTS = int(os.environ.get("WYZE_TOTAL_SPOTS", "3"))
+  TOTAL_SPOTS = int(os.environ.get("WYZE_TOTAL_SPOTS", "10"))
   ```
 
   Or override in PowerShell:
 
   ```powershell
-  $env:WYZE_TOTAL_SPOTS="4"
+  $env:WYZE_TOTAL_SPOTS="10"
   ```
 
-- **How often to analyze a frame**  
+- **How often to run YOLO / POST**  
 
   ```python
-  FRAME_INTERVAL_SECONDS = float(os.environ.get("FRAME_INTERVAL_SECONDS", "1.0"))
+  FRAME_INTERVAL_SECONDS = float(os.environ.get("FRAME_INTERVAL_SECONDS", "2.0"))
   ```
 
   Or:
 
   ```powershell
-  $env:FRAME_INTERVAL_SECONDS="1.0"
+  $env:FRAME_INTERVAL_SECONDS="2"
   ```
+
+- **Preview window**  
+  With `PREVIEW_LIVE=1` (default when `SHOW_PREVIEW=1`), the window shows a **live RTSP feed** and green text with the **last** vehicle count and availability; the **model still runs only every `FRAME_INTERVAL_SECONDS`**.  
+  Bounding boxes from YOLO appear only if you set `PREVIEW_LIVE=0` (window updates once per scan).
 
 - **Change threshold before posting**  
 
@@ -171,6 +192,49 @@ This means:
   ```
 
   Only when `availableSpots` changes by at least this many spots does it send an update.
+
+- **Cars visible but count stays 0**  
+  On Wyze RTSP, real cars often score **below 0.35–0.4** confidence, so Ultralytics never returns a box. Try:
+
+  ```powershell
+  $env:YOLO_CONF="0.2"          # or 0.15 if still missing
+  $env:YOLO_IMGSZ="1280"
+  $env:DETECTION_DEBUG="1"     # see every vehicle-class box and score
+  ```
+
+  Optional: use a slightly larger model (better on small cars, slower):
+
+  ```powershell
+  $env:YOLO_MODEL="yolov8s.pt"
+  ```
+
+  If you lowered `YOLO_CONF` and get too many phantom vehicles, add a **second** floor only for counting:
+
+  ```powershell
+  $env:YOLO_CONF="0.15"
+  $env:VEHICLE_MIN_CONF="0.28"
+  ```
+
+  To see *all* COCO labels again (debug), turn off vehicle-only filtering:
+
+  ```powershell
+  $env:YOLO_VEHICLE_ONLY="0"
+  ```
+
+- **“Not detecting anything” / no `[DEBUG] detection` lines**  
+  The script now defaults **RTSP over TCP on Windows**, **warms up** the stream, and prints a **`[PROBE]`** block every ~12s when the vehicle count is 0 (full COCO, low threshold). Read that output:
+  - **Probe lists `car`/`truck`/`motorcycle` with `<-- counted vehicle`** → lower `$env:YOLO_CONF` (e.g. `0.15`) or set `$env:YOLO_VEHICLE_ONLY="0"` temporarily.
+  - **Probe shows other labels only** → model is “seeing” the scene but not as a vehicle; aim the camera or try `$env:YOLO_MODEL="yolov8s.pt"`.
+  - **Probe shows no boxes** → stream/frame problem: confirm preview window isn’t black; try `$env:WYZE_WARMUP_FRAMES="40"` or `$env:WYZE_PROBE_CONF="0.03"`.
+
+- **Terminal: `[h264] Missing reference picture` / `decode_slice_header error`**  
+  The H.264 decoder started mid-stream or dropped reference frames. The script now defaults to **TCP RTSP**, **FFmpeg `discardcorrupt`**, a **capture buffer of 4** (not 1), **longer warmup**, and a short pause between reads.  
+  If errors persist: restart **Wyze Bridge** and the script; optionally try `$env:WYZE_CAP_BUFFERSIZE="6"` or `$env:WYZE_WARMUP_FRAMES="80"`.  
+  To override FFmpeg options entirely (PowerShell, **before** `python`):
+
+  ```powershell
+  $env:OPENCV_FFMPEG_CAPTURE_OPTIONS="rtsp_transport;tcp|fflags;discardcorrupt"
+  ```
 
 ---
 

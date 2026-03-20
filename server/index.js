@@ -32,7 +32,8 @@ app.get('/api/parking', (_req, res) => {
   res.json(data);
 });
 
-app.listen(PORT, () => {
+// Bind to all IPv4 interfaces so hotspot/other devices can reach the API.
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Parking sensor API at http://localhost:${PORT}`);
   console.log('  GET  /api/parking  - current sensor occupancy');
   console.log('  POST /api/parking  - update (body: { lotId, availableSpots })');
